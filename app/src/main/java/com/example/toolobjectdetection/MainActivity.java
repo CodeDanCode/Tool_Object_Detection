@@ -2,6 +2,7 @@ package com.example.toolobjectdetection;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -52,21 +53,24 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     private static final int MY_CAMERA_REQUEST_CODE = 101;
-    private static final String TAG = "Probability";
+    private static final String TAG = "Test";
 
-    private Button btnCapture;
-    private TextView featureText;
-    private TextView confidenceText;
-    private CameraView cameraView;
-    private SurfaceView surfaceView;
+    public static SurfaceHolder parentSurfaceHolder;
+    private DetectObject detectObject;
+    public TextView featureText;
+    public TextView confidenceText;
     private SurfaceHolder surfaceHolder;
     private Bitmap bitmap;
-
+    private SurfaceView surfaceView;
+    private Button btnCapture;
+    private Context context;
+    private CameraView cameraView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        context = getApplicationContext();
 
         btnCapture = findViewById(R.id.button);
         featureText = findViewById(R.id.feature);
@@ -76,13 +80,10 @@ public class MainActivity extends AppCompatActivity {
         surfaceView.setZOrderMediaOverlay(true);
         surfaceHolder = surfaceView.getHolder();
         surfaceHolder.setFormat(PixelFormat.TRANSPARENT);
+        parentSurfaceHolder = surfaceHolder;
 
         cameraView = findViewById(R.id.cameraView);
         cameraView.setLifecycleOwner(this);
-
-        if(!hasCamera()){
-            btnCapture.setEnabled(false);
-        }
 
         btnCapture.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -90,7 +91,6 @@ public class MainActivity extends AppCompatActivity {
                 takePicture();
             }
         });
-
 
         cameraView.addFrameProcessor(new FrameProcessor() {
             @Override
@@ -105,22 +105,11 @@ public class MainActivity extends AppCompatActivity {
                 byte[] data = frame.getData();
 
                   TestStream(frame);
+
             }});
 
     }
 
-    private boolean hasCamera(){
-        if(getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)){
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-                    != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.CAMERA},
-                        MY_CAMERA_REQUEST_CODE);
-            }
-            return true;
-        }else{
-            return false;
-        }
-    }
 
     public void takePicture(){
         Intent intent = new Intent(this,takePictureActivity.class);
@@ -128,60 +117,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
-    @SuppressLint("SetTextI18n")
     public void TestStream(Frame frame){
+
         bitmap = FrameImage(frame);
         TensorImage image = new TensorImage(DataType.UINT8);
         image.load(bitmap);
 
-        // Initialization
-        ObjectDetector.ObjectDetectorOptions options = ObjectDetector.ObjectDetectorOptions.builder().setMaxResults(1).build();
-        ObjectDetector objectDetector = null;
-        try {
-            objectDetector = ObjectDetector.createFromFileAndOptions(this, "tool_object_detect_1_model.tflite", options);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        detectObject = new DetectObject(context,bitmap,surfaceHolder);
+        detectObject.Detect();
+        featureText.setText(detectObject.getFeature());
+        confidenceText.setText(detectObject.getProbability());
 
-        assert objectDetector != null;
-        List<Detection> results = objectDetector.detect(image);
-//        Log.d("Test",String.valueOf(results));
-
-        for ( Detection detected: results) {
-            RectF boundingBox = detected.getBoundingBox();
-            for (Category labels : detected.getCategories()) {
-                String text = labels.getLabel();
-                float confidence = labels.getScore();
-                featureText.setText("Feature: "+text);
-                confidenceText.setText("Confidence: "+ confidence);
-//                Log.d("Test",text);
-//                Log.d("Test",String.valueOf(confidence));
-
-                if(text.equals("b'Hammer'") || text.equals("b'Wrench'")||text.equals("b'Wrench_Head'")){
-                    drawRect(boundingBox);
-                }
-
-            }
-
-        }
     }
-
-    public void drawRect(RectF bounds){
-        try{
-            Canvas canvas = surfaceHolder.lockCanvas();
-            canvas.drawColor(0, PorterDuff.Mode.CLEAR);
-            Paint paint = new Paint();
-            paint.setStyle(Paint.Style.STROKE);
-            paint.setColor(Color.BLUE);
-            paint.setStrokeWidth(5);
-            canvas.drawRect(bounds,paint);
-            surfaceHolder.unlockCanvasAndPost(canvas);
-        }catch (Throwable e){
-            Log.d("Test","error in drawing");
-        }
-    }
-
 
     public Bitmap FrameImage(Frame frame) {
         byte[] data = frame.getData();

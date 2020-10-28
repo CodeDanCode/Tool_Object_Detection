@@ -3,15 +3,25 @@ package com.example.toolobjectdetection;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
+import android.content.res.AssetManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.PixelFormat;
+import android.graphics.PorterDuff;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
@@ -30,56 +40,60 @@ import org.tensorflow.lite.support.image.TensorImage;
 import org.tensorflow.lite.support.label.Category;
 import org.tensorflow.lite.task.vision.detector.Detection;
 import org.tensorflow.lite.task.vision.detector.ObjectDetector;
+import org.tensorflow.lite.task.vision.segmenter.ImageSegmenter;
+import org.tensorflow.lite.task.vision.segmenter.OutputType;
+import org.tensorflow.lite.task.vision.segmenter.Segmentation;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 public class takePictureActivity extends AppCompatActivity{
-    Bitmap bitmapImage;
+    private static final String TAG = "Test";
+
     ImageView imageView;
     CameraView cameraView;
     TextView feature,probability;
     SurfaceView surfaceView;
     Button btnCapture;
-    SurfaceTexture surfaceTexture;
-
+    SurfaceHolder surfaceHolder;
+    AssetManager assetManager;
+    DetectObject detectObject;
+    Context context;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_take_picture);
+        context = getApplicationContext();
+
         imageView = findViewById(R.id.imageView);
         feature = findViewById(R.id.feature);
         probability = findViewById(R.id.probability);
         btnCapture = findViewById(R.id.button);
 
         surfaceView = findViewById(R.id.surfaceView);
-        surfaceView.setZOrderMediaOverlay(true);
-        surfaceTexture = new SurfaceTexture(0);
+        surfaceView.setZOrderOnTop(true);
+        surfaceHolder = surfaceView.getHolder();
+        surfaceHolder.setFormat(PixelFormat.TRANSPARENT);
+        assetManager = getAssets();
 
         cameraView = findViewById(R.id.cameraView);
         cameraView.setMode(Mode.PICTURE);
         cameraView.setLifecycleOwner(this);
-
-        // MediaStore Intent for Image Capture
-//        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-//        startActivityForResult(intent,2);
-
 
         btnCapture.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (cameraView.isOpened()) {
                     takePicture();
-                   Log.d("Test", "Picture Taken");
+                   Log.d(TAG, "Picture Taken");
                 }else{
                     cameraView.open();
                 }
 
             }
         });
-
-
     }
 
     // take picture and listen for results
@@ -88,20 +102,18 @@ public class takePictureActivity extends AppCompatActivity{
 
             @Override
             public void onPictureTaken(@NotNull PictureResult result) {
-
                 result.toBitmap(320, 320, new BitmapCallback() {
-
                     @Override
                     public void onBitmapReady(Bitmap bitmap) {
-                        //here bitmap you will get
                         imageView.setImageBitmap(bitmap);
-                        Log.d("Test","in bitmap callback");
-                        DetectObject(bitmap);
+                        Log.d(TAG,"in bitmap callback");
+                        detectObject = new DetectObject(context,bitmap,surfaceHolder);
+                        detectObject.Detect();
+                        feature.setText(detectObject.getFeature());
+                        probability.setText(detectObject.getProbability());
                         cameraView.close();
-
                     }
                 });
-
             }
         });
 
@@ -110,89 +122,22 @@ public class takePictureActivity extends AppCompatActivity{
     }
 
 
-    public void DetectObject(Bitmap bitmap){
-
-        TensorImage image = new TensorImage(DataType.UINT8);
-        image.load(bitmap);
-
-        // Initialization
-        ObjectDetector.ObjectDetectorOptions options = ObjectDetector.ObjectDetectorOptions.builder().setMaxResults(1).build();
-        ObjectDetector objectDetector = null;
-        try {
-            objectDetector = ObjectDetector.createFromFileAndOptions(this, "tool_object_detect_1_model.tflite", options);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        assert objectDetector != null;
-        List<Detection> results = objectDetector.detect(image);
-        for ( Detection detected: results) {
-            RectF boundingBox = detected.getBoundingBox();
-            Log.d("Test",String.valueOf(boundingBox));
-
-            //Draw Bounding box for still image
-
-            for(Category labels: detected.getCategories()){
-                String text = labels.getLabel();
-                float confidence = labels.getScore();
-                Log.d("Test",text);
-                feature.setText(text);
-                probability.setText(String.valueOf(confidence));
-            }
-
-        }
+    @Override
+    protected void onResume() {
+        super.onResume();
+        cameraView.open();
     }
 
-    /*
-    On Activity Result for Media Store. may use later
-    or use other method
-     */
-
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
-    protected void onActivityResult(int requestCode,int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        Bundle extras = data.getExtras();
-        assert extras != null;
-        bitmapImage = (Bitmap) extras.get("data");
+    protected void onPause() {
+        super.onPause();
+        cameraView.close();
+    }
 
-        if (requestCode == 2) {
-            if (resultCode == RESULT_OK) {
-
-                imageView.setImageBitmap(bitmapImage);
-
-                TensorImage image = new TensorImage(DataType.UINT8);
-                image.load(bitmapImage);
-
-                // Initialization
-                ObjectDetector.ObjectDetectorOptions options = ObjectDetector.ObjectDetectorOptions.builder().setMaxResults(1).build();
-                ObjectDetector objectDetector = null;
-                try {
-                    objectDetector = ObjectDetector.createFromFileAndOptions(this, "tool_object_detect_1_model.tflite", options);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                assert objectDetector != null;
-                List<Detection> results = objectDetector.detect(image);
-                for ( Detection detected: results) {
-                    RectF boundingBox = detected.getBoundingBox();
-                    Log.d("Test",String.valueOf(boundingBox));
-
-                    //Draw Bounding box for still image
-
-                    for(Category labels: detected.getCategories()){
-                        String text = labels.getLabel();
-                        float confidence = labels.getScore();
-                        Log.d("Test",text);
-                        feature.setText("Feature: "+text);
-                        probability.setText("Confidence: "+confidence);
-                    }
-
-                }
-
-            }
-        }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        cameraView.destroy();
     }
 
 
