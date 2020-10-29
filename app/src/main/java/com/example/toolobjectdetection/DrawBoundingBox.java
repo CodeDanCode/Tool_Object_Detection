@@ -17,7 +17,6 @@ public class DrawBoundingBox{
     public SurfaceHolder surfaceHolder;
     private RectF bounds;
 
-
     public DrawBoundingBox(SurfaceHolder surfaceHolder,RectF bounds){
         this.bounds = bounds;
         this.surfaceHolder = surfaceHolder;

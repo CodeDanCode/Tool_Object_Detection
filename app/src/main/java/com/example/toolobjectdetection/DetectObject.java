@@ -29,7 +29,6 @@ public class DetectObject{
     private Bitmap bitmap;
     private String feature,probability;
     private SurfaceHolder surfaceHolder;
-    private TextView featureView,probabilityView;
 
     public DetectObject(Context context,Bitmap bitmap, SurfaceHolder surfaceHolder){
         this.bitmap = bitmap;
@@ -59,6 +58,11 @@ public class DetectObject{
 
             RectF boundingBox = detected.getBoundingBox();
             Log.d("Test",String.valueOf(boundingBox));
+
+            Log.d("Test","Left: "+String.valueOf(detected.getBoundingBox().left));
+            Log.d("Test","Top: "+String.valueOf(detected.getBoundingBox().top));
+            Log.d("Test","Right: "+String.valueOf(detected.getBoundingBox().right));
+            Log.d("Test","Bottom: "+String.valueOf(detected.getBoundingBox().bottom));
 
             DrawBoundingBox drawBoundingBox = new DrawBoundingBox(this.surfaceHolder,boundingBox);
 

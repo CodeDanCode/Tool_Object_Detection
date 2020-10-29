@@ -106,7 +106,6 @@ public class takePictureActivity extends AppCompatActivity{
                     @Override
                     public void onBitmapReady(Bitmap bitmap) {
                         imageView.setImageBitmap(bitmap);
-                        Log.d(TAG,"in bitmap callback");
                         detectObject = new DetectObject(context,bitmap,surfaceHolder);
                         detectObject.Detect();
                         feature.setText(detectObject.getFeature());
