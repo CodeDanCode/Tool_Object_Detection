@@ -68,7 +68,9 @@ public class DetectSize {
     CameraCharacteristics info;
     Context context;
     Frame preview;
-    public DetectSize(Context context,CameraCharacteristics info,Frame frame,RectF D_bounds,RectF R_bounds){
+
+
+    public DetectSize(Context context, CameraCharacteristics info, Frame frame, RectF D_bounds, RectF R_bounds){
         this.detectedBounds = D_bounds;
         this.referenceBounds = R_bounds;
         this.info = info;

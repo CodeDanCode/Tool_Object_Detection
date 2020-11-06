@@ -1,25 +1,14 @@
 package com.example.toolobjectdetection;
 
-import androidx.annotation.RequiresApi;
+
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.annotation.SuppressLint;
+
 import android.content.Context;
-import android.content.Intent;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.PixelFormat;
-import android.graphics.PorterDuff;
-import android.graphics.Rect;
-import android.graphics.RectF;
-import android.graphics.SurfaceTexture;
-import android.os.Build;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -33,20 +22,7 @@ import com.otaliastudios.cameraview.CameraListener;
 import com.otaliastudios.cameraview.CameraView;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.controls.Mode;
-
 import org.jetbrains.annotations.NotNull;
-import org.tensorflow.lite.DataType;
-import org.tensorflow.lite.support.image.TensorImage;
-import org.tensorflow.lite.support.label.Category;
-import org.tensorflow.lite.task.vision.detector.Detection;
-import org.tensorflow.lite.task.vision.detector.ObjectDetector;
-import org.tensorflow.lite.task.vision.segmenter.ImageSegmenter;
-import org.tensorflow.lite.task.vision.segmenter.OutputType;
-import org.tensorflow.lite.task.vision.segmenter.Segmentation;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
 
 public class takePictureActivity extends AppCompatActivity{
     private static final String TAG = "Test";
@@ -98,6 +74,7 @@ public class takePictureActivity extends AppCompatActivity{
 
     // take picture and listen for results
     public void takePicture(){
+
         cameraView.addCameraListener(new CameraListener() {
 
             @Override
@@ -105,8 +82,10 @@ public class takePictureActivity extends AppCompatActivity{
                 result.toBitmap(320, 320, new BitmapCallback() {
                     @Override
                     public void onBitmapReady(Bitmap bitmap) {
+
                         imageView.setImageBitmap(bitmap);
                         detectObject = new DetectObject(context,bitmap,surfaceHolder);
+                        detectObject.setStream(false);
                         detectObject.Detect();
                         feature.setText(detectObject.getFeature());
                         probability.setText(detectObject.getProbability());
@@ -115,9 +94,7 @@ public class takePictureActivity extends AppCompatActivity{
                 });
             }
         });
-
         cameraView.takePicture();
-
     }
 
 
@@ -138,7 +115,4 @@ public class takePictureActivity extends AppCompatActivity{
         super.onDestroy();
         cameraView.destroy();
     }
-
-
-
 }

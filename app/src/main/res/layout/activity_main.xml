@@ -20,7 +20,9 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:cameraEngine="camera2"
-        app:cameraPreview="glSurface"/>
+        app:cameraPreview="glSurface"
+        app:cameraFrameProcessingMaxWidth="320"
+        app:cameraFrameProcessingMaxHeight="320"/>
 
     <SurfaceView
         android:id="@+id/surfaceView"
