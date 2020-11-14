@@ -22,6 +22,7 @@ import com.otaliastudios.cameraview.CameraListener;
 import com.otaliastudios.cameraview.CameraView;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.controls.Mode;
+
 import org.jetbrains.annotations.NotNull;
 
 public class takePictureActivity extends AppCompatActivity{

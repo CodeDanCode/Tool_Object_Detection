@@ -1,21 +1,30 @@
 package com.example.toolobjectdetection;
 
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.PixelFormat;
 import android.graphics.YuvImage;
+import android.hardware.camera2.CameraAccessException;
+import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.SparseIntArray;
+import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.annotation.WorkerThread;
 import androidx.appcompat.app.AppCompatActivity;
 import com.otaliastudios.cameraview.CameraView;
@@ -29,7 +38,8 @@ import java.io.ByteArrayOutputStream;
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "Test";
-    public static SurfaceHolder parentSurfaceHolder;
+    private static final String cameraId = "0";
+
     private DetectObject detectObject;
     public TextView featureText;
     public TextView confidenceText;
@@ -39,12 +49,29 @@ public class MainActivity extends AppCompatActivity {
     private Button btnCapture;
     private Context context;
     private CameraView cameraView;
+    private int rotation;
+
+
+    private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
+    static {
+        ORIENTATIONS.append(Surface.ROTATION_0, 0);
+        ORIENTATIONS.append(Surface.ROTATION_90, 90);
+        ORIENTATIONS.append(Surface.ROTATION_180, 180);
+        ORIENTATIONS.append(Surface.ROTATION_270, 270);
+    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         context = getApplicationContext();
+        try {
+           rotation = getRotationCompensation(cameraId, this, false);
+           Log.d(TAG,String.valueOf(rotation));
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
+        }
 
         btnCapture = findViewById(R.id.button);
         featureText = findViewById(R.id.feature);
@@ -54,10 +81,10 @@ public class MainActivity extends AppCompatActivity {
         surfaceView.setZOrderMediaOverlay(true);
         surfaceHolder = surfaceView.getHolder();
         surfaceHolder.setFormat(PixelFormat.TRANSPARENT);
-        parentSurfaceHolder = surfaceHolder;
 
         cameraView = findViewById(R.id.cameraView);
         cameraView.setLifecycleOwner(this);
+        cameraView.setRotation(90);
 
         btnCapture.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -108,4 +135,29 @@ public class MainActivity extends AppCompatActivity {
             return null;
         }
     }
+
+
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    private int getRotationCompensation(String cameraId, Activity activity, boolean isFrontFacing)
+            throws CameraAccessException {
+        // Get the device's current rotation relative to its "native" orientation.
+        // Then, from the ORIENTATIONS table, look up the angle the image must be
+        // rotated to compensate for the device's rotation.
+        int deviceRotation = activity.getWindowManager().getDefaultDisplay().getRotation();
+        int rotationCompensation = ORIENTATIONS.get(deviceRotation);
+
+        // Get the device's sensor orientation.
+        CameraManager cameraManager = (CameraManager) activity.getSystemService(CAMERA_SERVICE);
+        int sensorOrientation = cameraManager
+                .getCameraCharacteristics(cameraId)
+                .get(CameraCharacteristics.SENSOR_ORIENTATION);
+
+        if (isFrontFacing) {
+            rotationCompensation = (sensorOrientation + rotationCompensation) % 360;
+        } else { // back-facing
+            rotationCompensation = (sensorOrientation - rotationCompensation + 360) % 360;
+        }
+        return rotationCompensation;
+    }
+
 }
