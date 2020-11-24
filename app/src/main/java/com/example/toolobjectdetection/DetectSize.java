@@ -51,13 +51,25 @@ float calc_distance_mm = _avg_distance_between_taillights_mm * focal_length_px /
 
 import android.content.Context;
 import android.graphics.RectF;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraManager;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.SizeF;
 import android.util.TypedValue;
 
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.size.Size;
+
+import org.tensorflow.lite.task.vision.detector.Detection;
+
+import java.util.Arrays;
+import java.util.List;
 
 import static java.lang.Math.PI;
 
@@ -67,46 +79,60 @@ public class DetectSize {
     Float final_size;
     CameraCharacteristics info;
     Context context;
-    Frame preview;
+    SizeF sensorSize;
+    float[] focalLength;
 
 
-    public DetectSize(Context context, CameraCharacteristics info, Frame frame, RectF D_bounds, RectF R_bounds){
-        this.detectedBounds = D_bounds;
-        this.referenceBounds = R_bounds;
-        this.info = info;
-        this.preview = frame;
+    public DetectSize(Context context, RectF referenceBounds,RectF detectedBounds){
 
+        this.detectedBounds = detectedBounds;
+        this.referenceBounds = referenceBounds;
+        this.context = context;
+
+        compare();
     }
+
 
     public void compare(){
 
-        float bottomLeft = detectedBounds.left;
-        float topLeft = detectedBounds.top;
-        float topRight = detectedBounds.right;
-        float bottomRight = detectedBounds.bottom;
+        CameraManager manager =
+                (CameraManager)context.getSystemService(Context.CAMERA_SERVICE);
+        try{
+            String[] cameraId = manager.getCameraIdList();
+            info = manager.getCameraCharacteristics(cameraId[0]);
+            sensorSize = info.get(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE);
+            focalLength = info.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
 
-        float centerX = detectedBounds.centerX();
-        float centerY = detectedBounds.centerY();
-
-        float sizeW = preview.getSize().getWidth();
-
-        //double focal_length_px = (size.width * 0.5) / Math.tan(horizontalViewAngle * 0.5 * PI/180);
-        double focal_length_px = (sizeW * 0.5) / Math.tan(getHFOV(info)*0.5 * PI/180);
-
-    }
-
-
-    //camera 2 method for deprecated horizontalViewAngle
-    private float getHFOV(CameraCharacteristics info) {
-        SizeF sensorSize = info.get(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE);
-        float[] focalLengths = info.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
-
-        if (focalLengths != null && focalLengths.length > 0) {
-            assert sensorSize != null;
-            return (float) (2.0f * Math.atan(sensorSize.getWidth() / (2.0f * focalLengths[0])));
+        }catch(CameraAccessException e){
+            e.printStackTrace();
         }
-        return 1.1f;
+
+        float R_WidthMm = (referenceBounds.width()/1440)*sensorSize.getWidth();
+
+        double finalRefSize= (304.8/focalLength[0])* R_WidthMm;
+
+
+        
+
+//        float sizeW = preview.getSize().getWidth();
+////        double focal_length_px = (size.width * 0.5) / Math.tan(horizontalViewAngle * 0.5 * PI/180);
+//        double focal_length_px = (sizeW * 0.5) / Math.tan(getHFOV(info)*0.5 * PI/180);
+
     }
+
+
+//    //camera 2 method for deprecated horizontalViewAngle
+//    private float getHFOV(CameraCharacteristics info) {
+//        SizeF sensorSize = info.get(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE);
+//
+//        float[] focalLengths = info.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
+//
+//        if (focalLengths != null && focalLengths.length > 0) {
+//            assert sensorSize != null;
+//            return (float) (2.0f * Math.atan(sensorSize.getWidth() / (2.0f * focalLengths[0])));
+//        }
+//        return 1.1f;
+//    }
 
     // convert pixels to millimeters
     public static float pxToMm(final float px, final Context context)
@@ -123,7 +149,23 @@ public class DetectSize {
         detectedBounds = b;
     }
 
+    public void setInfo(CameraCharacteristics i){
+        info = i;
+    }
+
+//    public void setFrame(Frame f){
+//        preview = f;
+//    }
+
     public Float getObjectSize(){
         return final_size;
     }
+
+    public void setContext(Context c){
+        context = c;
+    }
+
+
 }
+
+

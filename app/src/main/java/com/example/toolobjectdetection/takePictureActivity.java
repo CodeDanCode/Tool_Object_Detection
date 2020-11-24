@@ -85,8 +85,9 @@ public class takePictureActivity extends AppCompatActivity{
                     public void onBitmapReady(Bitmap bitmap) {
 
                         imageView.setImageBitmap(bitmap);
-                        detectObject = new DetectObject(context,bitmap,surfaceHolder);
+                        detectObject = new DetectObject(bitmap,surfaceHolder);
                         detectObject.setStream(false);
+                        detectObject.setContext(context);
                         detectObject.Detect();
                         feature.setText(detectObject.getFeature());
                         probability.setText(detectObject.getProbability());

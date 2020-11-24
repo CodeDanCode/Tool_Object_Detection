@@ -21,31 +21,38 @@ public class DrawBoundingBox{
     }
 
     public void DrawBBoxforStream() {
-        try {
-            Canvas canvas = surfaceHolder.lockCanvas();
-            canvas.drawColor(0, PorterDuff.Mode.CLEAR);
-            Paint paint = new Paint();
-            paint.setStyle(Paint.Style.STROKE);
-            paint.setColor(Color.BLUE);
-            paint.setStrokeWidth(5);
-            canvas.drawRect(bounds.left,bounds.top,bounds.right,bounds.bottom,paint);
-            surfaceHolder.unlockCanvasAndPost(canvas);
+        if(!bounds.isEmpty()){
+            try {
+                Canvas canvas = surfaceHolder.lockCanvas();
+                canvas.drawColor(0, PorterDuff.Mode.CLEAR);
+                Paint paint = new Paint();
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setColor(Color.BLUE);
+                paint.setStrokeWidth(5);
+                canvas.drawRect(bounds.left,bounds.top,bounds.right,bounds.bottom,paint);
+                surfaceHolder.unlockCanvasAndPost(canvas);
 
-        }catch (Throwable e){
-            Log.d("Test","Error in drawingBBforStream");
+            }catch (Throwable e){
+                Log.d("Test","Error in drawingBBforStream");
+            }
         }
+
     }
 
     // needs to be scaled to image size.
     public void drawBBoxforPic(){
         try {
             Canvas canvas = surfaceHolder.lockCanvas();
-//            canvas.drawColor(0,PorterDuff.Mode.CLEAR);
+            canvas.drawColor(0,PorterDuff.Mode.CLEAR);
             Paint paint = new Paint();
             paint.setStyle(Paint.Style.STROKE);
             paint.setColor(Color.BLUE);
             paint.setStrokeWidth(5);
             canvas.drawRect(bounds.left,bounds.top,bounds.right,bounds.bottom,paint);
+
+            Log.d("Test",String.valueOf(bounds.height()));
+            Log.d("Test",String.valueOf(bounds.width()));
+
             surfaceHolder.unlockCanvasAndPost(canvas);
 
         }catch (Throwable e){

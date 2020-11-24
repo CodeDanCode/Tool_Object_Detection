@@ -4,7 +4,6 @@ package com.example.toolobjectdetection;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
@@ -16,6 +15,7 @@ import android.hardware.camera2.CameraManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.SizeF;
 import android.util.SparseIntArray;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -33,6 +33,7 @@ import com.otaliastudios.cameraview.frame.FrameProcessor;
 import org.tensorflow.lite.DataType;
 import org.tensorflow.lite.support.image.TensorImage;
 import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -66,8 +67,10 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         context = getApplicationContext();
+
+
         try {
-           rotation = getRotationCompensation(cameraId, this, false);
+           rotation = getRotationCompensation(this);
            Log.d(TAG,String.valueOf(rotation));
         } catch (CameraAccessException e) {
             e.printStackTrace();
@@ -84,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
 
         cameraView = findViewById(R.id.cameraView);
         cameraView.setLifecycleOwner(this);
-        cameraView.setRotation(90);
+//        cameraView.setRotation(90);
 
         btnCapture.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -113,8 +116,9 @@ public class MainActivity extends AppCompatActivity {
         TensorImage image = new TensorImage(DataType.UINT8);
         image.load(bitmap);
 
-        detectObject = new DetectObject(context,bitmap,surfaceHolder);
+        detectObject = new DetectObject(bitmap,surfaceHolder);
         detectObject.setStream(true);
+        detectObject.setContext(context);
         detectObject.Detect();
         featureText.setText(detectObject.getFeature());
         confidenceText.setText(detectObject.getProbability());
@@ -138,7 +142,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    private int getRotationCompensation(String cameraId, Activity activity, boolean isFrontFacing)
+    private int getRotationCompensation(Activity activity)
             throws CameraAccessException {
         // Get the device's current rotation relative to its "native" orientation.
         // Then, from the ORIENTATIONS table, look up the angle the image must be
@@ -149,10 +153,10 @@ public class MainActivity extends AppCompatActivity {
         // Get the device's sensor orientation.
         CameraManager cameraManager = (CameraManager) activity.getSystemService(CAMERA_SERVICE);
         int sensorOrientation = cameraManager
-                .getCameraCharacteristics(cameraId)
+                .getCameraCharacteristics(MainActivity.cameraId)
                 .get(CameraCharacteristics.SENSOR_ORIENTATION);
 
-        if (isFrontFacing) {
+        if (false) {
             rotationCompensation = (sensorOrientation + rotationCompensation) % 360;
         } else { // back-facing
             rotationCompensation = (sensorOrientation - rotationCompensation + 360) % 360;

@@ -28,15 +28,17 @@ public class DetectObject{
     private SurfaceHolder surfaceHolder;
     private Boolean Stream;
     private DrawBoundingBox drawBoundingBox;
+    private DetectSize detectSize;
+    private RectF referenceBox,unknownBox;
 
-    public DetectObject(Context context,Bitmap bitmap, SurfaceHolder surfaceHolder){
+    public DetectObject(Bitmap bitmap, SurfaceHolder surfaceHolder){
         this.bitmap = bitmap;
         this.feature = null;
         this.probability = null;
-        this.context = context;
         this.surfaceHolder = surfaceHolder;
         this.Stream = false;
     }
+
 
     public void Detect(){
 
@@ -51,7 +53,7 @@ public class DetectObject{
                         // Center crop the image to the largest square possible
                         // Rotation counter-clockwise in 90 degree increments
                         .add(new ResizeOp(1440,1080 , ResizeOp.ResizeMethod.BILINEAR))
-                        .add(new Rot90Op(180))
+                        .add(new Rot90Op(90))
                         .build();
 
         TensorImage image = new TensorImage(DataType.UINT8);
@@ -59,7 +61,7 @@ public class DetectObject{
         image = imageProcessor.process(image);
 
 //       add .setScoreThreshold((float) 0.5) to set threshold for detector
-        ObjectDetector.ObjectDetectorOptions options = ObjectDetector.ObjectDetectorOptions.builder().setMaxResults(2).setScoreThreshold((float) 0.5).build();
+        ObjectDetector.ObjectDetectorOptions options = ObjectDetector.ObjectDetectorOptions.builder().setMaxResults(2).setScoreThreshold((float)0.20).build();
         ObjectDetector objectDetector = null;
         try {
             objectDetector = ObjectDetector.createFromFileAndOptions(context, "tool_object_detect_2_model.tflite", options);
@@ -69,13 +71,35 @@ public class DetectObject{
 
         assert objectDetector != null;
         List<Detection> results = objectDetector.detect(image);
-//        Log.d("Test",String.valueOf(results.get(1).getCategories().get(1).getLabel()));
+        Log.d("Test",String.valueOf(results));
+
+
+
+        if(results.size() == 2) {
+            float first = results.get(0).getBoundingBox().left;
+            float second = results.get(1).getBoundingBox().left;
+
+//            // comparing left cordinates
+//            if (first < second) {
+//                referenceBox = results.get(0).getBoundingBox();
+//                unknownBox = results.get(1).getBoundingBox();
+//                Log.d("Test", "reference1 :" + results.get(0).getCategories().get(0).getLabel());
+//            } else{
+//                referenceBox = results.get(1).getBoundingBox();
+//                unknownBox = results.get(0).getBoundingBox();
+////                Log.d("Test", "reference2 :" + results.get(1).getCategories().get(1).getLabel());
+//            }
+            detectSize = new DetectSize(context,referenceBox,unknownBox);
+            detectSize.setContext(context);
+        }
+
+
         for ( Detection detected: results) {
-            Log.d("Test",String.valueOf(detected));
+
             RectF boundingBox = detected.getBoundingBox();
 
             drawBoundingBox = new DrawBoundingBox(surfaceHolder,boundingBox);
-            
+
             for(Category labels: detected.getCategories()){
                 String text = labels.getLabel();
                 float confidence = labels.getScore();
@@ -90,12 +114,16 @@ public class DetectObject{
                 switch (text) {
                     case "background":
                         feature = "Wrench";
+
+
                         break;
                     case "b'Hammer'":
                         feature = "Wrench Head";
+
                         break;
                     case "b'Wrench'":
                         feature = "Hammer";
+
                         break;
                     case "b'Wrench_Head'":
                         feature = "Reference";
@@ -106,6 +134,7 @@ public class DetectObject{
                 probability = String.valueOf(confidence);
             }
         }
+
     }
 
     public String getFeature(){
@@ -123,8 +152,19 @@ public class DetectObject{
         }
     }
 
+    public void setFeature(String s){
+        this.feature = s;
+    }
+
+    public void setProbability(String s){
+        this.probability = s;
+    }
     public void setStream(Boolean t){
         this.Stream = t;
+    }
+
+    public void setContext(Context c){
+        context = c;
     }
 
 }
