@@ -5,9 +5,11 @@ import androidx.appcompat.app.AppCompatActivity;
 
 
 import android.content.Context;
-import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.PixelFormat;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceHolder;
@@ -34,7 +36,6 @@ public class takePictureActivity extends AppCompatActivity{
     SurfaceView surfaceView;
     Button btnCapture;
     SurfaceHolder surfaceHolder;
-    AssetManager assetManager;
     DetectObject detectObject;
     Context context;
 
@@ -53,11 +54,12 @@ public class takePictureActivity extends AppCompatActivity{
         surfaceView.setZOrderOnTop(true);
         surfaceHolder = surfaceView.getHolder();
         surfaceHolder.setFormat(PixelFormat.TRANSPARENT);
-        assetManager = getAssets();
 
         cameraView = findViewById(R.id.cameraView);
         cameraView.setMode(Mode.PICTURE);
         cameraView.setLifecycleOwner(this);
+
+
 
         btnCapture.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -75,22 +77,19 @@ public class takePictureActivity extends AppCompatActivity{
 
     // take picture and listen for results
     public void takePicture(){
-
         cameraView.addCameraListener(new CameraListener() {
-
             @Override
             public void onPictureTaken(@NotNull PictureResult result) {
                 result.toBitmap(320, 320, new BitmapCallback() {
                     @Override
                     public void onBitmapReady(Bitmap bitmap) {
-
                         imageView.setImageBitmap(bitmap);
                         detectObject = new DetectObject(bitmap,surfaceHolder);
                         detectObject.setStream(false);
                         detectObject.setContext(context);
                         detectObject.Detect();
                         feature.setText(detectObject.getFeature());
-                        probability.setText(detectObject.getProbability());
+                        probability.setText(detectObject.getFinalSize());
                         cameraView.close();
                     }
                 });
@@ -98,7 +97,6 @@ public class takePictureActivity extends AppCompatActivity{
         });
         cameraView.takePicture();
     }
-
 
     @Override
     protected void onResume() {
@@ -117,4 +115,5 @@ public class takePictureActivity extends AppCompatActivity{
         super.onDestroy();
         cameraView.destroy();
     }
+
 }

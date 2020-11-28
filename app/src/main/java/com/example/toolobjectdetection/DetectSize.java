@@ -76,7 +76,7 @@ import static java.lang.Math.PI;
 public class DetectSize {
 
     RectF detectedBounds, referenceBounds;
-    Float final_size;
+    Double final_size;
     CameraCharacteristics info;
     Context context;
     SizeF sensorSize;
@@ -109,7 +109,12 @@ public class DetectSize {
 
         float R_WidthMm = (referenceBounds.width()/1440)*sensorSize.getWidth();
 
-        double finalRefSize= (304.8/focalLength[0])* R_WidthMm;
+
+//        change distance in millimeters for correct calculations
+//      distance = 304.8  // 1 foot
+        double distance = 488.95;
+        final_size= (distance/focalLength[0])* R_WidthMm;
+        Log.d("Test","Final Size: "+ Math.round(final_size));
 
 
         
@@ -134,6 +139,7 @@ public class DetectSize {
 //        return 1.1f;
 //    }
 
+    
     // convert pixels to millimeters
     public static float pxToMm(final float px, final Context context)
     {
@@ -153,11 +159,7 @@ public class DetectSize {
         info = i;
     }
 
-//    public void setFrame(Frame f){
-//        preview = f;
-//    }
-
-    public Float getObjectSize(){
+    public Double getObjectSize(){
         return final_size;
     }
 

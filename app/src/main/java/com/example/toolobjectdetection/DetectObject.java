@@ -1,7 +1,5 @@
 package com.example.toolobjectdetection;
 
-
-
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -24,7 +22,7 @@ public class DetectObject{
 
     public Context context;
     private Bitmap bitmap;
-    private String feature,probability;
+    private String feature,probability,final_size;
     private SurfaceHolder surfaceHolder;
     private Boolean Stream;
     private DrawBoundingBox drawBoundingBox;
@@ -61,7 +59,7 @@ public class DetectObject{
         image = imageProcessor.process(image);
 
 //       add .setScoreThreshold((float) 0.5) to set threshold for detector
-        ObjectDetector.ObjectDetectorOptions options = ObjectDetector.ObjectDetectorOptions.builder().setMaxResults(2).setScoreThreshold((float)0.20).build();
+        ObjectDetector.ObjectDetectorOptions options = ObjectDetector.ObjectDetectorOptions.builder().setMaxResults(1).build();
         ObjectDetector objectDetector = null;
         try {
             objectDetector = ObjectDetector.createFromFileAndOptions(context, "tool_object_detect_2_model.tflite", options);
@@ -75,10 +73,10 @@ public class DetectObject{
 
 
 
-        if(results.size() == 2) {
-            float first = results.get(0).getBoundingBox().left;
-            float second = results.get(1).getBoundingBox().left;
-
+//        if(results.size() == 2) {
+//            float first = results.get(0).getBoundingBox().left;
+//            float second = results.get(1).getBoundingBox().left;
+//
 //            // comparing left cordinates
 //            if (first < second) {
 //                referenceBox = results.get(0).getBoundingBox();
@@ -89,10 +87,16 @@ public class DetectObject{
 //                unknownBox = results.get(0).getBoundingBox();
 ////                Log.d("Test", "reference2 :" + results.get(1).getCategories().get(1).getLabel());
 //            }
-            detectSize = new DetectSize(context,referenceBox,unknownBox);
-            detectSize.setContext(context);
-        }
+//
+//
+//        }
 
+        referenceBox = results.get(0).getBoundingBox();
+        unknownBox = null;
+        detectSize = new DetectSize(context,referenceBox,unknownBox);
+
+        detectSize.setContext(context);
+        final_size = String.valueOf(Math.round(detectSize.getObjectSize()));
 
         for ( Detection detected: results) {
 
@@ -150,6 +154,10 @@ public class DetectObject{
         }else{
             return "Null String";
         }
+    }
+
+    public String getFinalSize(){
+        return final_size;
     }
 
     public void setFeature(String s){

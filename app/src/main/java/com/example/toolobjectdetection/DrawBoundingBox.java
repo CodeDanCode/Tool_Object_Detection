@@ -31,6 +31,8 @@ public class DrawBoundingBox{
                 paint.setStrokeWidth(5);
                 canvas.drawRect(bounds.left,bounds.top,bounds.right,bounds.bottom,paint);
                 surfaceHolder.unlockCanvasAndPost(canvas);
+                Log.d("Test","Stream Height: "+ bounds.height());
+                Log.d("Test","Stream Width: "+ bounds.width());
 
             }catch (Throwable e){
                 Log.d("Test","Error in drawingBBforStream");
@@ -50,8 +52,8 @@ public class DrawBoundingBox{
             paint.setStrokeWidth(5);
             canvas.drawRect(bounds.left,bounds.top,bounds.right,bounds.bottom,paint);
 
-            Log.d("Test",String.valueOf(bounds.height()));
-            Log.d("Test",String.valueOf(bounds.width()));
+            Log.d("Test","Pic Height: " + bounds.height());
+            Log.d("Test","Pic Width: "+ bounds.width());
 
             surfaceHolder.unlockCanvasAndPost(canvas);
 

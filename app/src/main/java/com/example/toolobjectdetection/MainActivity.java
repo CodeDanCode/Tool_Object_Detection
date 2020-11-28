@@ -69,12 +69,12 @@ public class MainActivity extends AppCompatActivity {
         context = getApplicationContext();
 
 
-        try {
-           rotation = getRotationCompensation(this);
-           Log.d(TAG,String.valueOf(rotation));
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
-        }
+//        try {
+//           rotation = getRotationCompensation(this);
+//           Log.d(TAG,String.valueOf(rotation));
+//        } catch (CameraAccessException e) {
+//            e.printStackTrace();
+//        }
 
         btnCapture = findViewById(R.id.button);
         featureText = findViewById(R.id.feature);
@@ -141,27 +141,27 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    private int getRotationCompensation(Activity activity)
-            throws CameraAccessException {
-        // Get the device's current rotation relative to its "native" orientation.
-        // Then, from the ORIENTATIONS table, look up the angle the image must be
-        // rotated to compensate for the device's rotation.
-        int deviceRotation = activity.getWindowManager().getDefaultDisplay().getRotation();
-        int rotationCompensation = ORIENTATIONS.get(deviceRotation);
-
-        // Get the device's sensor orientation.
-        CameraManager cameraManager = (CameraManager) activity.getSystemService(CAMERA_SERVICE);
-        int sensorOrientation = cameraManager
-                .getCameraCharacteristics(MainActivity.cameraId)
-                .get(CameraCharacteristics.SENSOR_ORIENTATION);
-
-        if (false) {
-            rotationCompensation = (sensorOrientation + rotationCompensation) % 360;
-        } else { // back-facing
-            rotationCompensation = (sensorOrientation - rotationCompensation + 360) % 360;
-        }
-        return rotationCompensation;
-    }
+//    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+//    private int getRotationCompensation(Activity activity)
+//            throws CameraAccessException {
+//        // Get the device's current rotation relative to its "native" orientation.
+//        // Then, from the ORIENTATIONS table, look up the angle the image must be
+//        // rotated to compensate for the device's rotation.
+//        int deviceRotation = activity.getWindowManager().getDefaultDisplay().getRotation();
+//        int rotationCompensation = ORIENTATIONS.get(deviceRotation);
+//
+//        // Get the device's sensor orientation.
+//        CameraManager cameraManager = (CameraManager) activity.getSystemService(CAMERA_SERVICE);
+//        int sensorOrientation = cameraManager
+//                .getCameraCharacteristics(MainActivity.cameraId)
+//                .get(CameraCharacteristics.SENSOR_ORIENTATION);
+//
+//        if(false) {
+//            rotationCompensation = (sensorOrientation + rotationCompensation) % 360;
+//        } else { // back-facing
+//            rotationCompensation = (sensorOrientation - rotationCompensation + 360) % 360;
+//        }
+//        return rotationCompensation;
+//    }
 
 }
